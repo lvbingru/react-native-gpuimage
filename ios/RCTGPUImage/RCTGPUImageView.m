@@ -20,10 +20,7 @@
     _filter = filter;
     [_filter forceProcessingAtSize:self.sizeInPixels];
     [_filter addTarget:self];
-    if (_sourcePicture) {
-        [_sourcePicture addTarget:_filter];
-        [_sourcePicture processImage];
-    }
+    [self updateImage];
 }
 
 - (void)setSourcePicture:(GPUImagePicture *)sourcePicture
@@ -45,8 +42,13 @@
 
 - (void)updateImage
 {
-    if (_sourcePicture && _filter) {
-        [_sourcePicture addTarget:_filter];
+    if (_sourcePicture) {
+        if (_filter) {
+            [_sourcePicture addTarget:_filter];
+        }
+        else {
+            [_sourcePicture addTarget:self];
+        }
         [_sourcePicture processImage];
     }
 }
