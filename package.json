@@ -1,0 +1,25 @@
+{
+  "name": "react-native-gpuimage",
+  "version": "1.0.0",
+  "description": "react-native-gpuimage",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lvbingru/react-native-gpuimage.git"
+  },
+  "keywords": [
+    "react-native",
+    "ios",
+    "android",
+    "gpuimage"
+  ],
+  "author": "lvbingru",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/lvbingru/react-native-gpuimage/issues"
+  },
+  "homepage": "https://github.com/lvbingru/react-native-gpuimage#readme"
+}
