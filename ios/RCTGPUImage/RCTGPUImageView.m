@@ -18,8 +18,7 @@
 - (void)setFilter:(GPUImageFilter *)filter
 {
     _filter = filter;
-    [_filter forceProcessingAtSize:self.sizeInPixels];
-    [_filter addTarget:self];
+//    [_filter forceProcessingAtSize:self.sizeInPixels];
     [self updateImage];
 }
 
@@ -49,6 +48,11 @@
         else {
             [_sourcePicture addTarget:self];
         }
+        if ([_filter respondsToSelector:@selector(updateSources)]) {
+            [_filter performSelector:@selector(updateSources)];
+        }
+        [_filter removeAllTargets];
+        [_filter addTarget:self];
         [_sourcePicture processImage];
     }
 }

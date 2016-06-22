@@ -41,7 +41,7 @@ RCT_CUSTOM_VIEW_PROPERTY(filter, NSString, RCTGPUImageView)
 {
     NSString *filter = [RCTConvert NSString:json];
     
-    if (!view.filter || ![filter isEqualToString:NSStringFromClass(view.filter)]) {
+    if (!view.filter || ![filter isEqualToString:NSStringFromClass(view.filter.class)]) {
         
         Class filterClass = NSClassFromString(filter);
         id imageFilter = [filterClass new];
