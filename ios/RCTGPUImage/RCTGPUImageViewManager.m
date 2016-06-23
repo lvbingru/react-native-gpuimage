@@ -43,8 +43,7 @@ RCT_CUSTOM_VIEW_PROPERTY(tintColor, UIColor, RCTImageView)
     view.renderingMode = json ? UIImageRenderingModeAlwaysTemplate : defaultView.renderingMode;
 }
 
-//RCT_EXPORT_VIEW_PROPERTY(params, NSDictionary)
-RCT_CUSTOM_VIEW_PROPERTY(filter, NSString, RCTGPUImageView)
+RCT_CUSTOM_VIEW_PROPERTY(filter, NSDictionary, RCTGPUImageView)
 {
     NSDictionary *filter = [RCTConvert NSDictionary:json];
     NSString *name = filter[@"name"];
