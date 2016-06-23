@@ -109,13 +109,18 @@
                     Class filterClass = NSClassFromString(name);
                     GPUImageFilter *imageFilter = [filterClass new];
                     if ([imageFilter isKindOfClass:[GPUImageFilter class]]) {
+                        [filterList.lastObject addTarget:imageFilter];
                         [_filterGroup addFilter:imageFilter];
                         [filterList addObject:imageFilter];
                     }
                 }
             }
-            [_filterGroup setInitialFilters:filterList];
-            [_filterGroup setTerminalFilter:filterList.lastObject];
+            if (filterList.firstObject) {
+                [_filterGroup setInitialFilters:@[filterList.firstObject]];
+            }
+            if (filterList.lastObject) {
+                [_filterGroup setTerminalFilter:filterList.lastObject];
+            }
         }
         
         count = [_filterGroup filterCount];
