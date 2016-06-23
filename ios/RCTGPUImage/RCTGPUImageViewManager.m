@@ -55,8 +55,10 @@ RCT_CUSTOM_VIEW_PROPERTY(filter, NSDictionary, RCTGPUImageView)
         id imageFilter = [filterClass new];
         if ([imageFilter isKindOfClass:[GPUImageFilter class]]) {
             view.filter = imageFilter;
-            view.params = params;
         }
+    }
+    if (params) {
+        view.params = params;
     }
 }
 
