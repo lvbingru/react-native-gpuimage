@@ -12,8 +12,7 @@
 
 @interface RCTGPUImageView : RCTImageView
 
-@property (nonatomic, strong) GPUImageFilter *filter;
-@property (nonatomic, strong) NSDictionary *params;
+@property (nonatomic, strong) NSArray *filters;
 
 - (UIImage *)captureImage;
 

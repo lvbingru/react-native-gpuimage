@@ -43,23 +43,10 @@ RCT_CUSTOM_VIEW_PROPERTY(tintColor, UIColor, RCTImageView)
     view.renderingMode = json ? UIImageRenderingModeAlwaysTemplate : defaultView.renderingMode;
 }
 
-RCT_CUSTOM_VIEW_PROPERTY(filter, NSDictionary, RCTGPUImageView)
+RCT_CUSTOM_VIEW_PROPERTY(filters, NSArray, RCTGPUImageView)
 {
-    NSDictionary *filter = [RCTConvert NSDictionary:json];
-    NSString *name = filter[@"name"];
-    NSDictionary *params = filter[@"params"];
-    
-    if (!view.filter || ![name isEqualToString:NSStringFromClass(view.filter.class)]) {
-        
-        Class filterClass = NSClassFromString(name);
-        id imageFilter = [filterClass new];
-        if ([imageFilter isKindOfClass:[GPUImageFilter class]]) {
-            view.filter = imageFilter;
-        }
-    }
-    if (params) {
-        view.params = params;
-    }
+    NSArray *filters = [RCTConvert NSArray:json];
+    [view setFilters:filters];
 }
 
 RCT_EXPORT_METHOD(capture:(nonnull NSNumber *)reactTag

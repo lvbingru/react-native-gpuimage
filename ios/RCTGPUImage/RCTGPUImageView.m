@@ -7,9 +7,13 @@
 //
 
 #import "RCTGPUImageView.h"
+#import "RCTImageSource.h"
 
-@interface RCTGPUImageView()
+@interface RCTGPUImageView() {
+    BOOL _needReloadFilterGroup;
+}
 
+@property (nonatomic, strong) GPUImageFilterGroup *filterGroup;
 @property (nonatomic, strong) GPUImageView *gpuImageView;
 @property (nonatomic, strong) GPUImagePicture *sourcePicture;
 
@@ -25,35 +29,24 @@
         [gpuImageView setClipsToBounds:YES];
         [self addSubview:gpuImageView];
         _gpuImageView = gpuImageView;
+        
     }
     return self;
 }
 
-- (void)setFilter:(GPUImageFilter *)filter
+- (void)setFilters:(NSArray *)filters
 {
-    _filter = filter;
-//    [_filter forceProcessingAtSize:self.sizeInPixels];
-    [self reloadGPUImage];
-}
-
-- (void)setParams:(NSDictionary *)params
-{
-    if (!params) {
-        return;
-    }
-    for (NSString *key in params.allKeys) {
-        if ([_filter respondsToSelector:NSSelectorFromString(key)]) {
-            [_filter setValue:params[key] forKeyPath:key];
-        }
-    }
-    [_sourcePicture processImage];
+    _filters = filters;
+    _needReloadFilterGroup = YES;
+    
+    [self reloadFilterGroups];
 }
 
 - (UIImage *)captureImage
 {
-    [_filter useNextFrameForImageCapture];
+    [_filterGroup useNextFrameForImageCapture];
     [_sourcePicture processImage];
-    UIImage *image = [_filter imageFromCurrentFramebuffer];
+    UIImage *image = [_filterGroup imageFromCurrentFramebuffer];
     return image;
 }
 
@@ -63,18 +56,82 @@
 {
     if (_sourcePicture && _gpuImageView) {
         [_sourcePicture removeAllTargets];
-        [_filter removeAllTargets];
-        if (_filter) {
-            [_sourcePicture addTarget:_filter];
+        [_filterGroup removeAllTargets];
+        
+        if (_filterGroup) {
+            [_sourcePicture addTarget:_filterGroup];
         }
         else {
             [_sourcePicture addTarget:_gpuImageView];
         }
-        if ([_filter respondsToSelector:@selector(updateSources)]) {
-            [_filter performSelector:@selector(updateSources)];
+        int count = [_filterGroup filterCount];
+        for (int i = 0; i< count; i++) {
+            GPUImageFilter *filter = [_filterGroup filterAtIndex:i];
+            if ([filter respondsToSelector:@selector(updateSources)]) {
+                [filter performSelector:@selector(updateSources)];
+            }
         }
-        [_filter addTarget:_gpuImageView];
+        [_filterGroup addTarget:_gpuImageView];
         [_sourcePicture processImage];
+    }
+}
+
+- (void)reloadFilterGroups
+{
+    if (_needReloadFilterGroup) {
+        _needReloadFilterGroup = NO;
+        
+        BOOL needUpdate = NO;
+        NSInteger count = [_filterGroup filterCount];
+        if (_filters.count != count) {
+            needUpdate = YES;
+        }
+        else {
+            for (int i = 0; i< count; i++) {
+                NSDictionary *filterDic = _filters[i];
+                NSString *name = filterDic[@"name"];
+                
+                GPUImageFilter *filter = [_filterGroup filterAtIndex:i];
+                if (![name isEqualToString:NSStringFromClass(filter.class)]) {
+                    needUpdate = YES;
+                    break;
+                }
+            }
+        }
+        
+        if (needUpdate) {
+            _filterGroup = [GPUImageFilterGroup new];
+            NSMutableArray *filterList = [NSMutableArray new];
+            for (NSDictionary *filter in _filters) {
+                NSString *name = filter[@"name"];
+                
+                if (name) {
+                    Class filterClass = NSClassFromString(name);
+                    GPUImageFilter *imageFilter = [filterClass new];
+                    if ([imageFilter isKindOfClass:[GPUImageFilter class]]) {
+                        [_filterGroup addFilter:imageFilter];
+                        [filterList addObject:imageFilter];
+                    }
+                }
+            }
+            [_filterGroup setInitialFilters:filterList];
+            [_filterGroup setTerminalFilter:filterList.lastObject];
+        }
+        
+        count = [_filterGroup filterCount];
+        for (int i = 0; i< count; i++) {
+            NSDictionary *filterDic = _filters[i];
+            NSDictionary *params = filterDic[@"params"];
+            if (params) {
+                GPUImageFilter *filter = [_filterGroup filterAtIndex:i];
+                for (NSString *key in params.allKeys) {
+                    if ([filter respondsToSelector:NSSelectorFromString(key)]) {
+                        [filter setValue:params[key] forKeyPath:key];
+                    }
+                }
+            }
+        }
+        [self reloadGPUImage];
     }
 }
 
@@ -97,6 +154,12 @@
     [self reloadGPUImage];
 }
 
+- (void)clearGPUImage
+{
+    [_filterGroup removeAllTargets];
+    _sourcePicture = nil;
+}
+
 #pragma mark - overwrite
 - (void)setImage:(UIImage *)image
 {
@@ -104,12 +167,19 @@
     [super setImage:image];
     
     if (image == nil) {
-        [_sourcePicture removeAllTargets];
-        [_filter removeAllTargets];
+        [self clearGPUImage];
     }
     if (needUpdate) {
         [self upateGPUImage:image];
     }
+}
+
+- (void)setSource:(RCTImageSource *)source
+{
+    if (![source isEqual:super.source]) {
+        [self clearGPUImage];
+    }
+    [super setSource:source];
 }
 
 @end
