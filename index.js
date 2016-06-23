@@ -28,8 +28,7 @@ class GPUImageView extends Component {
 }
 
 GPUImageView.propTypes = {
-  filter: PropTypes.string,
-  params: PropTypes.object,
+  filter: PropTypes.object,
   ...Image.propTypes,
 };
 

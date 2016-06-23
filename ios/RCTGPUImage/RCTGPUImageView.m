@@ -38,6 +38,9 @@
 
 - (void)setParams:(NSDictionary *)params
 {
+    if (!params) {
+        return;
+    }
     for (NSString *key in params.allKeys) {
         if ([_filter respondsToSelector:NSSelectorFromString(key)]) {
             [_filter setValue:params[key] forKeyPath:key];
