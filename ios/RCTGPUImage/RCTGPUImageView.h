@@ -7,12 +7,14 @@
 //
 
 #import <UIKit/UIKit.h>
+#import "RCTImageView.h"
 #import "GPUImage.h"
 
-@interface RCTGPUImageView : GPUImageView
+@interface RCTGPUImageView : RCTImageView
 
 @property (nonatomic, strong) GPUImageFilter *filter;
-@property (nonatomic, strong) GPUImagePicture *sourcePicture;
 @property (nonatomic, strong) NSDictionary *params;
+
+- (UIImage *)captureImage;
 
 @end

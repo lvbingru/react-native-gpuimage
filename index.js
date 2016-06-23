@@ -8,7 +8,7 @@ import React, {
   PropTypes,
 } from 'react';
 
-import {requireNativeComponent, findNodeHandle, Platform, NativeModules} from 'react-native'
+import {requireNativeComponent, findNodeHandle, Platform, NativeModules, Image} from 'react-native'
 const GPUImageViewManager = NativeModules.GPUImageViewManager;
 
 class GPUImageView extends Component {
@@ -28,9 +28,9 @@ class GPUImageView extends Component {
 }
 
 GPUImageView.propTypes = {
-  image: PropTypes.string,
   filter: PropTypes.string,
   params: PropTypes.object,
+  ...Image.propTypes,
 };
 
 var RCTGPUImageView = requireNativeComponent('RCTGPUImageView', GPUImageView)

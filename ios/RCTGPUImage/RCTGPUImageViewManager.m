@@ -21,22 +21,29 @@ RCT_EXPORT_MODULE()
 
 - (UIView *)view
 {
-    return [[RCTGPUImageView alloc] init];
+    return [[RCTGPUImageView alloc] initWithBridge:self.bridge];
+}
+
+RCT_EXPORT_VIEW_PROPERTY(blurRadius, CGFloat)
+RCT_EXPORT_VIEW_PROPERTY(capInsets, UIEdgeInsets)
+RCT_REMAP_VIEW_PROPERTY(defaultSource, defaultImage, UIImage)
+RCT_EXPORT_VIEW_PROPERTY(onLoadStart, RCTDirectEventBlock)
+RCT_EXPORT_VIEW_PROPERTY(onProgress, RCTDirectEventBlock)
+RCT_EXPORT_VIEW_PROPERTY(onError, RCTDirectEventBlock)
+RCT_EXPORT_VIEW_PROPERTY(onLoad, RCTDirectEventBlock)
+RCT_EXPORT_VIEW_PROPERTY(onLoadEnd, RCTDirectEventBlock)
+RCT_REMAP_VIEW_PROPERTY(resizeMode, contentMode, RCTResizeMode)
+RCT_EXPORT_VIEW_PROPERTY(source, RCTImageSource)
+RCT_CUSTOM_VIEW_PROPERTY(tintColor, UIColor, RCTImageView)
+{
+    // Default tintColor isn't nil - it's inherited from the superView - but we
+    // want to treat a null json value for `tintColor` as meaning 'disable tint',
+    // so we toggle `renderingMode` here instead of in `-[RCTImageView setTintColor:]`
+    view.tintColor = [RCTConvert UIColor:json] ?: defaultView.tintColor;
+    view.renderingMode = json ? UIImageRenderingModeAlwaysTemplate : defaultView.renderingMode;
 }
 
 RCT_EXPORT_VIEW_PROPERTY(params, NSDictionary)
-
-RCT_CUSTOM_VIEW_PROPERTY(image, NSString, RCTGPUImageView)
-{
-    NSString *image = [RCTConvert NSString:json];
-    [self.bridge.imageLoader loadImageWithTag:image callback:^(NSError *error, UIImage *image) {
-        if (image) {
-            GPUImagePicture *sourcePicture = [[GPUImagePicture alloc] initWithImage:image smoothlyScaleOutput:YES];
-            view.sourcePicture = sourcePicture;
-        }
-    }];
-}
-
 RCT_CUSTOM_VIEW_PROPERTY(filter, NSString, RCTGPUImageView)
 {
     NSString *filter = [RCTConvert NSString:json];
@@ -51,20 +58,6 @@ RCT_CUSTOM_VIEW_PROPERTY(filter, NSString, RCTGPUImageView)
     }
 }
 
-RCT_CUSTOM_VIEW_PROPERTY(resizeMode, RCTResizeMode, RCTGPUImageView)
-{
-    RCTResizeMode resizeMode = [RCTConvert RCTResizeMode:json];
-    if (resizeMode == RCTResizeModeCover) {
-        view.fillMode = kGPUImageFillModePreserveAspectRatioAndFill;
-    }
-    else if (resizeMode == RCTResizeModeContain) {
-        view.fillMode = kGPUImageFillModePreserveAspectRatio;
-    }
-    else if (resizeMode == RCTResizeModeStretch) {
-        view.fillMode = kGPUImageFillModeStretch;
-    }
-}
-
 RCT_EXPORT_METHOD(capture:(nonnull NSNumber *)reactTag
                   resolve:(RCTPromiseResolveBlock)resolve
                   reject:(RCTPromiseRejectBlock)reject)
@@ -73,9 +66,7 @@ RCT_EXPORT_METHOD(capture:(nonnull NSNumber *)reactTag
         UIView *view = [self.bridge.uiManager viewForReactTag:reactTag];
         if ([view isKindOfClass:[RCTGPUImageView class]]) {
             RCTGPUImageView *gpuImageView = view;
-            [gpuImageView.filter useNextFrameForImageCapture];
-            [gpuImageView.sourcePicture processImage];
-            UIImage *image = [gpuImageView.filter imageFromCurrentFramebuffer];
+            UIImage *image = [gpuImageView captureImage];
             if (image) {
                 [self.bridge.imageStoreManager storeImage:image withBlock:^(NSString *imageTag) {
                     resolve(imageTag);
