@@ -60,18 +60,18 @@
         
         if (_filterGroup) {
             [_sourcePicture addTarget:_filterGroup];
+            int count = [_filterGroup filterCount];
+            for (int i = 0; i< count; i++) {
+                GPUImageFilter *filter = [_filterGroup filterAtIndex:i];
+                if ([filter respondsToSelector:@selector(updateSources)]) {
+                    [filter performSelector:@selector(updateSources)];
+                }
+            }
+            [_filterGroup addTarget:_gpuImageView];
         }
         else {
             [_sourcePicture addTarget:_gpuImageView];
         }
-        int count = [_filterGroup filterCount];
-        for (int i = 0; i< count; i++) {
-            GPUImageFilter *filter = [_filterGroup filterAtIndex:i];
-            if ([filter respondsToSelector:@selector(updateSources)]) {
-                [filter performSelector:@selector(updateSources)];
-            }
-        }
-        [_filterGroup addTarget:_gpuImageView];
         [_sourcePicture processImage];
     }
 }
@@ -82,8 +82,8 @@
         _needReloadFilterGroup = NO;
         
         BOOL needUpdate = NO;
-        NSInteger count = [_filterGroup filterCount];
-        if (_filters.count != count) {
+        NSInteger count = _filters.count;
+        if (count != [_filterGroup filterCount]) {
             needUpdate = YES;
         }
         else {
@@ -123,7 +123,6 @@
             }
         }
         
-        count = [_filterGroup filterCount];
         for (int i = 0; i< count; i++) {
             NSDictionary *filterDic = _filters[i];
             NSDictionary *params = filterDic[@"params"];

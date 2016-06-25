@@ -34,7 +34,7 @@ RCT_EXPORT_VIEW_PROPERTY(onLoad, RCTDirectEventBlock)
 RCT_EXPORT_VIEW_PROPERTY(onLoadEnd, RCTDirectEventBlock)
 RCT_REMAP_VIEW_PROPERTY(resizeMode, contentMode, RCTResizeMode)
 RCT_EXPORT_VIEW_PROPERTY(source, RCTImageSource)
-RCT_CUSTOM_VIEW_PROPERTY(tintColor, UIColor, RCTImageView)
+RCT_CUSTOM_VIEW_PROPERTY(tintColor, UIColor, RCTGPUImageView)
 {
     // Default tintColor isn't nil - it's inherited from the superView - but we
     // want to treat a null json value for `tintColor` as meaning 'disable tint',

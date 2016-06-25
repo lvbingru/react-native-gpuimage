@@ -27,10 +27,14 @@ android {
 
 repositories {
   mavenCentral()
-//  jcenter()
+  jcenter()
+  maven {
+    // All of React Native (JS, Obj-C sources, Android binaries) is installed from npm
+    url "$projectDir/../../../node_modules/react-native/android"
+  }
 }
 
 dependencies {
-  compile 'com.facebook.react:react-native:+'
-//  compile 'jp.co.cyberagent.android.gpuimage:gpuimage-library:1.4.1'
+  compile "com.facebook.react:react-native:+"
+  compile 'jp.co.cyberagent.android.gpuimage:gpuimage-library:1.4.1'
 }
