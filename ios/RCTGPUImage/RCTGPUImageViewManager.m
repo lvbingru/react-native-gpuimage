@@ -59,8 +59,14 @@ RCT_EXPORT_METHOD(capture:(nonnull NSNumber *)reactTag
             RCTGPUImageView *gpuImageView = view;
             UIImage *image = [gpuImageView captureImage];
             if (image) {
+                CGFloat width = image.size.width  * image.scale;
+                CGFloat height = image.size.height * image.scale;
                 [self.bridge.imageStoreManager storeImage:image withBlock:^(NSString *imageTag) {
-                    resolve(imageTag);
+                    NSMutableDictionary *ret = [NSMutableDictionary new];
+                    ret[@"uri"] = imageTag;
+                    ret[@"width"] = @(width);
+                    ret[@"height"] = @(height);
+                    resolve(ret);
                 }];
             }
             else {
