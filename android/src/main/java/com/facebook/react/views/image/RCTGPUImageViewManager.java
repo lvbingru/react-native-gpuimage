@@ -40,7 +40,6 @@ public class RCTGPUImageViewManager extends SimpleViewManager<RCTGPUImageView> {
         return mDraweeControllerBuilder;
     }
 
-
     @Override
     public String getName() {
         return REACT_CLASS;
@@ -50,6 +49,29 @@ public class RCTGPUImageViewManager extends SimpleViewManager<RCTGPUImageView> {
     public RCTGPUImageView createViewInstance(ThemedReactContext context) {
         return new RCTGPUImageView(
                 context);
+    }
+
+    final static int COMMAND_CAPTURE = 1;
+
+    @Override
+    public Map<String,Integer> getCommandsMap() {
+        return MapBuilder.of(
+                "capture",
+                COMMAND_CAPTURE
+        );
+    }
+
+    @Override
+    public void receiveCommand(
+            RCTGPUImageView view,
+            int commandType,
+            @Nullable ReadableArray args) {
+        switch (commandType) {
+            case COMMAND_CAPTURE: {
+                view.doCapture();
+                return;
+            }
+        }
     }
 
 
@@ -68,12 +90,8 @@ public class RCTGPUImageViewManager extends SimpleViewManager<RCTGPUImageView> {
     @Override
     public @Nullable Map getExportedCustomDirectEventTypeConstants() {
         return MapBuilder.of(
-                ImageLoadEvent.eventNameForType(ImageLoadEvent.ON_LOAD_START),
-                MapBuilder.of("registrationName", "onLoadStart"),
-                ImageLoadEvent.eventNameForType(ImageLoadEvent.ON_LOAD),
-                MapBuilder.of("registrationName", "onLoad"),
-                ImageLoadEvent.eventNameForType(ImageLoadEvent.ON_LOAD_END),
-                MapBuilder.of("registrationName", "onLoadEnd")
+                "topCaptureFailed", MapBuilder.of("registrationName", "onCaptureFailed"),
+                "topCaptureDone", MapBuilder.of("registrationName", "onCaptureDone")
         );
     }
 

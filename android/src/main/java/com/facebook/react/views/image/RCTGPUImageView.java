@@ -52,18 +52,28 @@ import com.facebook.imagepipeline.request.BasePostprocessor;
 import com.facebook.imagepipeline.request.ImageRequest;
 import com.facebook.imagepipeline.request.ImageRequestBuilder;
 import com.facebook.imagepipeline.request.Postprocessor;
+import com.facebook.react.bridge.Arguments;
+import com.facebook.react.bridge.Promise;
+import com.facebook.react.bridge.PromiseImpl;
 import com.facebook.react.bridge.ReactContext;
 import com.facebook.react.bridge.ReadableArray;
 import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.ReadableMapKeySetIterator;
 import com.facebook.react.bridge.ReadableType;
+import com.facebook.react.bridge.WritableMap;
+import com.facebook.react.common.MapBuilder;
 import com.facebook.react.common.SystemClock;
 import com.facebook.react.uimanager.PixelUtil;
 import com.facebook.react.uimanager.UIManagerModule;
 import com.facebook.react.uimanager.events.EventDispatcher;
+import com.facebook.react.uimanager.events.RCTEventEmitter;
 
+import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.Arrays;
+import java.util.Map;
 
 import jp.co.cyberagent.android.gpuimage.GPUImage;
 import jp.co.cyberagent.android.gpuimage.GPUImageFilter;
@@ -75,6 +85,8 @@ import jp.co.cyberagent.android.gpuimage.GPUImageView;
  * update and consistent processing of both static and network images.
  */
 public class RCTGPUImageView extends GPUImageView {
+
+    private static final String TEMP_FILE_PREFIX = "gpuimage_capture_";
 
     private GPUImageFilterGroup mFilterGroup;
 
@@ -141,12 +153,14 @@ public class RCTGPUImageView extends GPUImageView {
                 ReadableMapKeySetIterator interator = params.keySetIterator();
                 while (interator.hasNextKey()) {
                     String key = interator.nextKey();
+                    String setter = "set"+key.substring(0, 1).toUpperCase() + key.substring(1);
                     try {
-                        Field field = filter.getClass().getDeclaredField(key);
                         ReadableType type = params.getType(key);
+
                         if (type == ReadableType.Number) {
+                            Method field = filter.getClass().getMethod(setter, Float.TYPE);
                             double number = params.getDouble(key);
-                            field.setDouble(filter, number);
+                            field.invoke(filter, (float)number);
                         }
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -175,6 +189,68 @@ public class RCTGPUImageView extends GPUImageView {
                 }
             });
         }
+    }
+
+    private void onCaptureSuccessed(String uri, int width, int height) {
+        WritableMap event = Arguments.createMap();
+        event.putString("uri", uri);
+        event.putInt("width", width);
+        event.putInt("height", height);
+        ReactContext reactContext = (ReactContext)getContext();
+        reactContext.getJSModule(RCTEventEmitter.class).receiveEvent(
+                getId(),
+                "topCaptureDone",
+                event);
+    }
+
+    private void onCaptureFailed(String message) {
+        WritableMap event = Arguments.createMap();
+        event.putString("message", message);
+        ReactContext reactContext = (ReactContext)getContext();
+        reactContext.getJSModule(RCTEventEmitter.class).receiveEvent(
+                getId(),
+                "topCaptureFailed",
+                event);
+    }
+
+    public void doCapture() {
+        final int reactTag = getId();
+
+        try {
+            File dest = createTempFile(getContext());
+            final int width = this.getMeasuredWidth();
+            final int height = this.getMeasuredHeight();
+
+            this.saveToPictures(dest.getParent(), dest.getName(), new OnPictureSavedListener(){
+                @Override
+                public void onPictureSaved(Uri uri) {
+                    onCaptureSuccessed(uri.toString(), width, height);
+                }
+            });
+        } catch (Throwable e){
+            onCaptureFailed(e.getMessage());
+        }
+
+    }
+
+    private static File createTempFile(Context context)
+            throws IOException {
+        File externalCacheDir = context.getExternalCacheDir();
+        File internalCacheDir = context.getCacheDir();
+        File cacheDir;
+        if (externalCacheDir == null && internalCacheDir == null) {
+            throw new IOException("No cache directory available");
+        }
+        if (externalCacheDir == null) {
+            cacheDir = internalCacheDir;
+        }
+        else if (internalCacheDir == null) {
+            cacheDir = externalCacheDir;
+        } else {
+            cacheDir = externalCacheDir.getFreeSpace() > internalCacheDir.getFreeSpace() ?
+                    externalCacheDir : internalCacheDir;
+        }
+        return File.createTempFile(TEMP_FILE_PREFIX, ".jpg", cacheDir);
     }
 
     private interface ImageCallback {

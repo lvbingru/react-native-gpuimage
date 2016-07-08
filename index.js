@@ -8,10 +8,24 @@ import React, {
   PropTypes,
 } from 'react';
 
-import {requireNativeComponent, findNodeHandle, Platform, NativeModules, Image} from 'react-native'
+import {
+  requireNativeComponent, Platform, NativeModules, Image,
+  UIManager,
+  findNodeHandle,
+} from 'react-native'
 const GPUImageViewManager = NativeModules.GPUImageViewManager;
 
 class GPUImageView extends Component {
+  onCaptureDone = (ev) => {
+    const capturing = this.capturing;
+    this.capturing = null;
+    capturing && capturing.resolve(ev.nativeEvent);
+  };
+  onCaptureFailed = ev => {
+    const capturing = this.capturing;
+    this.capturing = null;
+    capturing && capturing.reject(new Error(ev.nativeEvent.message));
+  };
   render() {
     if (Platform.OS === 'ios') {
       return <RCTGPUImageView {...this.props} />;
@@ -36,8 +50,9 @@ class GPUImageView extends Component {
           shouldNotifyLoadEvents: !!(onLoadStart || onLoad || onLoadEnd),
           src: source.uri,
           loadingIndicatorSrc: loadingIndicatorSource ? loadingIndicatorSource.uri : null,
+          onCaptureDone: this.onCaptureDone,
+          onCaptureFailed: this.onCaptureFailed,
         };
-        console.log(nativeProps)
         return <RCTGPUImageView {...nativeProps} />;
       }
       else {
@@ -46,9 +61,21 @@ class GPUImageView extends Component {
     }
   }
 
-  async capture() {
-    const node = findNodeHandle(this)
-    return await GPUImageViewManager.capture(node);
+  capture() {
+    if (Platform.OS === 'ios'){
+      return GPUImageViewManager.capture(findNodeHandle(this));
+    }
+    if (this.capturing) {
+      return Promise.reject('isCapturing');
+    }
+    UIManager.dispatchViewManagerCommand(
+      findNodeHandle(this),
+      UIManager.RCTGPUImageView.Commands.capture,
+      null
+    );
+    return new Promise((resolve, reject)=>{
+      this.capturing = {resolve, reject};
+    });
   }
 }
 
@@ -64,12 +91,15 @@ var cfg = {
 
 if (Platform.OS === 'android') {
   cfg.nativeOnly = {
+    ...cfg.nativeOnly,
     src: true,
     loadingIndicatorSrc: true,
     defaultImageSrc: true,
     imageTag: true,
     progressHandlerRegistered: true,
     shouldNotifyLoadEvents: true,
+    onCaptureDone: true,
+    onCaptureFailed: true,
   }
 }
 
