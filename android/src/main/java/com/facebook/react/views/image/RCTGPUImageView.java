@@ -9,73 +9,36 @@
 
 package com.facebook.react.views.image;
 
-import javax.annotation.Nullable;
-
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.BitmapShader;
-import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Matrix;
-import android.graphics.Paint;
-import android.graphics.Path;
-import android.graphics.Rect;
-import android.graphics.RectF;
-import android.graphics.Shader;
-import android.graphics.drawable.Animatable;
-import android.graphics.drawable.Drawable;
 import android.net.Uri;
 
 import com.facebook.common.executors.UiThreadImmediateExecutorService;
 import com.facebook.common.references.CloseableReference;
 import com.facebook.common.util.UriUtil;
-import com.facebook.csslayout.CSSConstants;
-import com.facebook.csslayout.FloatUtil;
 import com.facebook.datasource.DataSource;
 import com.facebook.drawee.backends.pipeline.Fresco;
-import com.facebook.drawee.controller.AbstractDraweeControllerBuilder;
-import com.facebook.drawee.controller.BaseControllerListener;
-import com.facebook.drawee.controller.ControllerListener;
-import com.facebook.drawee.controller.ForwardingControllerListener;
-import com.facebook.drawee.drawable.AutoRotateDrawable;
-import com.facebook.drawee.drawable.ScalingUtils;
-import com.facebook.drawee.generic.GenericDraweeHierarchy;
-import com.facebook.drawee.generic.GenericDraweeHierarchyBuilder;
-import com.facebook.drawee.generic.RoundingParams;
-import com.facebook.drawee.view.GenericDraweeView;
 import com.facebook.imagepipeline.common.ResizeOptions;
 import com.facebook.imagepipeline.core.ImagePipeline;
 import com.facebook.imagepipeline.datasource.BaseBitmapDataSubscriber;
 import com.facebook.imagepipeline.image.CloseableImage;
-import com.facebook.imagepipeline.image.ImageInfo;
-import com.facebook.imagepipeline.request.BasePostprocessor;
 import com.facebook.imagepipeline.request.ImageRequest;
 import com.facebook.imagepipeline.request.ImageRequestBuilder;
-import com.facebook.imagepipeline.request.Postprocessor;
 import com.facebook.react.bridge.Arguments;
-import com.facebook.react.bridge.Promise;
-import com.facebook.react.bridge.PromiseImpl;
 import com.facebook.react.bridge.ReactContext;
 import com.facebook.react.bridge.ReadableArray;
 import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.ReadableMapKeySetIterator;
 import com.facebook.react.bridge.ReadableType;
 import com.facebook.react.bridge.WritableMap;
-import com.facebook.react.common.MapBuilder;
-import com.facebook.react.common.SystemClock;
-import com.facebook.react.uimanager.PixelUtil;
-import com.facebook.react.uimanager.UIManagerModule;
-import com.facebook.react.uimanager.events.EventDispatcher;
 import com.facebook.react.uimanager.events.RCTEventEmitter;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.Arrays;
-import java.util.Map;
 
-import jp.co.cyberagent.android.gpuimage.GPUImage;
+import javax.annotation.Nullable;
+
 import jp.co.cyberagent.android.gpuimage.GPUImageFilter;
 import jp.co.cyberagent.android.gpuimage.GPUImageFilterGroup;
 import jp.co.cyberagent.android.gpuimage.GPUImageView;
@@ -102,51 +65,58 @@ public class RCTGPUImageView extends GPUImageView {
     public void setFilters(ReadableArray filters) {
         boolean needUpdate = false;
         int count = filters.size();
+
+        ReadableMap[] filters0 = new ReadableMap[count];
+        for (int i = 0 ;i<count; i++) {
+            ReadableMap filterMap = filters.getMap(i);
+            filters0[i] = filterMap;
+        }
+
         if (mFilterGroup==null || mFilterGroup.getFilters().size() != count) {
             needUpdate = true;
         }
         else {
             for (int i = 0 ;i<count; i++) {
-                ReadableMap filterMap = filters.getMap(i);
+//                ReadableMap filterMap = filters.getMap(i);
+                ReadableMap filterMap = filters0[i];
                 String name = filterMap.getString("name");
                 GPUImageFilter filter = mFilterGroup.getFilters().get(i);
                 if (!filter.getClass().getName().equals(name)) {
                     needUpdate = true;
                     break;
                 }
-
             }
         }
 
         if (needUpdate) {
             mFilterGroup = new GPUImageFilterGroup();
             for (int i = 0; i<count; i++) {
-                ReadableMap filterMap = filters.getMap(i);
-                String name = filterMap.getString("name");
-                if (name != null) {
-                    try {
-                        Class c = Class.forName("jp.co.cyberagent.android.gpuimage."+name);
-                        GPUImageFilter imageFilter;
-                        if (name.startsWith("IF")) {
-                            Class[] cArg = new Class[1];
-                            cArg[0] = Context.class;
-                            imageFilter = (GPUImageFilter) c.getDeclaredConstructor(cArg).newInstance(getContext());
-                        }
-                        else {
-                            imageFilter = (GPUImageFilter) c.newInstance();
-                        }
-                        mFilterGroup.addFilter(imageFilter);
-                    } catch (Exception e) {
-                        GPUImageFilter imageFilter = new GPUImageFilter();
-                        mFilterGroup.addFilter(imageFilter);
+//                ReadableMap filterMap = filters.getMap(i);
+                ReadableMap filterMap = filters0[i];
+                try {
+                    String name = filterMap.getString("name");
+                    Class c = Class.forName("jp.co.cyberagent.android.gpuimage."+name);
+                    GPUImageFilter imageFilter;
+                    if (name.startsWith("IF")) {
+                        Class[] cArg = new Class[1];
+                        cArg[0] = Context.class;
+                        imageFilter = (GPUImageFilter) c.getDeclaredConstructor(cArg).newInstance(getContext());
                     }
+                    else {
+                        imageFilter = (GPUImageFilter) c.newInstance();
+                    }
+                    mFilterGroup.addFilter(imageFilter);
+                } catch (Exception e) {
+                    GPUImageFilter imageFilter = new GPUImageFilter();
+                    mFilterGroup.addFilter(imageFilter);
                 }
             }
             this.setFilter(mFilterGroup);
         }
 
         for (int i = 0 ; i<count ; i++) {
-            ReadableMap filterMap = filters.getMap(i);
+//            ReadableMap filterMap = filters.getMap(i);
+            ReadableMap filterMap = filters0[i];
             if (filterMap.hasKey("params")) {
                 ReadableMap params = filterMap.getMap("params");
                 GPUImageFilter filter = mFilterGroup.getFilters().get(i);
