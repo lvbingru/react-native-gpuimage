@@ -27,7 +27,7 @@ RCT_EXPORT_METHOD(processImage:(NSDictionary *)imageInfo
     NSString *filter = [RCTConvert NSString:imageInfo[@"filter"]];
     NSDictionary *params = [RCTConvert NSDictionary:imageInfo[@"params"]];
     
-    [self.bridge.imageLoader loadImageWithTag:imageTag callback:^(NSError *error, UIImage *image) {
+    [self.bridge.imageLoader loadImageWithURLRequest:[RCTConvert NSURLRequest:imageTag] callback:^(NSError *error, UIImage *image) {
         if (error) {
             reject([NSString stringWithFormat:@"%d",(int)error.code],error.description,nil);
             return;
