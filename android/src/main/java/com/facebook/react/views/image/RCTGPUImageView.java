@@ -41,6 +41,7 @@ import javax.annotation.Nullable;
 
 import jp.co.cyberagent.android.gpuimage.GPUImageFilter;
 import jp.co.cyberagent.android.gpuimage.GPUImageFilterGroup;
+import jp.co.cyberagent.android.gpuimage.GPUImageTransformFilter;
 import jp.co.cyberagent.android.gpuimage.GPUImageView;
 
 /**
@@ -120,22 +121,36 @@ public class RCTGPUImageView extends GPUImageView {
             if (filterMap.hasKey("params")) {
                 ReadableMap params = filterMap.getMap("params");
                 GPUImageFilter filter = mFilterGroup.getFilters().get(i);
-                ReadableMapKeySetIterator interator = params.keySetIterator();
-                while (interator.hasNextKey()) {
-                    String key = interator.nextKey();
-                    String setter = "set"+key.substring(0, 1).toUpperCase() + key.substring(1);
+                if (filter instanceof GPUImageTransformFilter) {
                     try {
-                        ReadableType type = params.getType(key);
-
-                        if (type == ReadableType.Number) {
-                            Method field = filter.getClass().getMethod(setter, Float.TYPE);
-                            double number = params.getDouble(key);
-                            field.invoke(filter, (float)number);
+                        ReadableArray transformA = params.getArray("transform3D");
+                        int size = transformA.size();
+                        float[] transform = new float[size];
+                        for (int item=0;item<size;item++) {
+                            transform[item] = (float)transformA.getDouble(item);
                         }
+                        ((GPUImageTransformFilter) filter).setTransform3D(transform);
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
+                }
+                else {
+                    ReadableMapKeySetIterator interator = params.keySetIterator();
+                    while (interator.hasNextKey()) {
+                        String key = interator.nextKey();
+                        String setter = "set"+key.substring(0, 1).toUpperCase() + key.substring(1);
+                        try {
+                            ReadableType type = params.getType(key);
+                            if (type == ReadableType.Number) {
+                                Method field = filter.getClass().getMethod(setter, Float.TYPE);
+                                double number = params.getDouble(key);
+                                field.invoke(filter, (float)number);
+                            }
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
 
+                    }
                 }
             }
         }

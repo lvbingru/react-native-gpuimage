@@ -128,9 +128,21 @@
             NSDictionary *params = filterDic[@"params"];
             if (params) {
                 GPUImageFilter *filter = [_filterGroup filterAtIndex:i];
-                for (NSString *key in params.allKeys) {
-                    if ([filter respondsToSelector:NSSelectorFromString(key)]) {
-                        [filter setValue:params[key] forKeyPath:key];
+                if ([filter isKindOfClass:[GPUImageTransformFilter class]]) {
+                    CATransform3D transform = CATransform3DIdentity;
+                    CGFloat *p = (CGFloat *)&transform;
+                    NSArray *modelViewMatrix = params[@"transform3D"];
+                    for (int i = 0; i < 16; ++i) {
+                        *p = [[modelViewMatrix objectAtIndex:i] floatValue];
+                        ++p;
+                    }
+                    [(GPUImageTransformFilter *)filter setTransform3D:transform];
+                }
+                else {
+                    for (NSString *key in params.allKeys) {
+                        if ([filter respondsToSelector:NSSelectorFromString(key)]) {
+                            [filter setValue:params[key] forKeyPath:key];
+                        }
                     }
                 }
             }
