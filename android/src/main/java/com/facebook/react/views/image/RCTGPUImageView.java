@@ -170,6 +170,20 @@ public class RCTGPUImageView extends GPUImageView {
                     if (imageUri.equals(lastImageUri)) {
                         savedBitmap = bitmap;
                         setImage(bitmap);
+                        if (bitmap!= null) {
+                            int width = bitmap.getWidth();
+                            int height = bitmap.getHeight();
+                            WritableMap event = Arguments.createMap();
+                            WritableMap size = Arguments.createMap();
+                            size.putInt("width",width);
+                            size.putInt("height",height);
+                            event.putMap("size", size);
+                            ReactContext reactContext = (ReactContext)getContext();
+                            reactContext.getJSModule(RCTEventEmitter.class).receiveEvent(
+                                    getId(),
+                                    "topGetSize",
+                                    event);
+                        }
                     }
                 }
             });

@@ -187,6 +187,9 @@
     }
     if (needUpdate) {
         [self upateGPUImage:image];
+        if(self.onGetSize) {
+            self.onGetSize(@{@"size":@{@"width":@(image.size.width), @"height":@(image.size.height)}});
+        }
     }
 }
 

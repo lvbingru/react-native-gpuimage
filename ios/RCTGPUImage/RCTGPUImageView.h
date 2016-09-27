@@ -9,10 +9,12 @@
 #import <UIKit/UIKit.h>
 #import "RCTImageView.h"
 #import "GPUImage.h"
+#import "RCTComponent.h"
 
 @interface RCTGPUImageView : RCTImageView
 
 @property (nonatomic, strong) NSArray *filters;
+@property (nonatomic, copy) RCTBubblingEventBlock onGetSize;
 
 - (UIImage *)captureImage;
 
