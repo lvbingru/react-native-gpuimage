@@ -81,6 +81,7 @@ class GPUImageView extends Component {
 
 GPUImageView.propTypes = {
   filters: PropTypes.array,
+  onGetSize : PropTypes.func,
   ...Image.propTypes,
 };
 
@@ -100,6 +101,7 @@ if (Platform.OS === 'android') {
     shouldNotifyLoadEvents: true,
     onCaptureDone: true,
     onCaptureFailed: true,
+    onGetSize : true,
   }
 }
 
