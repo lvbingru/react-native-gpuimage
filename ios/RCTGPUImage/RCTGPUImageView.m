@@ -195,10 +195,10 @@
 
 - (void)setSource:(RCTImageSource *)source
 {
-    if (![source isEqual:super.source]) {
+    if (![source isEqual:super.imageSources]) {
         [self clearGPUImage];
     }
-    [super setSource:source];
+    //[super setSource:source];
 }
 
 @end
